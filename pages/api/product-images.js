@@ -48,7 +48,12 @@ export default async function handler(req, res) {
     const images = sorted.map((e) => e.url);
     const thumbEntry = sorted.find((e) => /^thumbnail\./i.test(e.name)) || null;
 
-    return res.status(200).json({ images, thumbnail: thumbEntry ? thumbEntry.url : null });
+    // Include file metadata for admin (name + url) while keeping old shape
+    return res.status(200).json({ 
+      images, 
+      thumbnail: thumbEntry ? thumbEntry.url : null,
+      files: sorted // [{ name, url }]
+    });
   } catch (error) {
     console.error("product-images error", error);
     return res.status(500).json({ message: "Error reading images" });

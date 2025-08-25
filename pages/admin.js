@@ -14,6 +14,8 @@ export default function Admin() {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [selectedThumbnail, setSelectedThumbnail] = useState(null);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [existingImages, setExistingImages] = useState([]); // [{name, url}]
+  const [loadingImages, setLoadingImages] = useState(false);
   const router = useRouter();
 
   // Removed auto-logout on refresh/unload to prevent immediate logout on entry
@@ -84,8 +86,48 @@ export default function Admin() {
       setImagePreviews([]);
       // Clean up preview URLs
       imagePreviews.forEach(preview => URL.revokeObjectURL(preview.url));
+      // Refresh existing images list if we had a productId before clearing it
+      if (productId) {
+        await fetchExistingImages(productId);
+      }
     } catch (error) {
       setImageMessage("Error uploading images");
+    }
+  };
+
+  const fetchExistingImages = async (pid) => {
+    if (!pid) return;
+    setLoadingImages(true);
+    try {
+      const res = await fetch(`/api/product-images?id=${encodeURIComponent(pid)}`);
+      const data = await res.json();
+      setExistingImages(data.files || []);
+    } catch (e) {
+      setExistingImages([]);
+    } finally {
+      setLoadingImages(false);
+    }
+  };
+
+  const handleDeleteImage = async (name) => {
+    if (!productId || !name) return;
+    if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
+    try {
+      const res = await fetch('/api/delete-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, name })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        // Remove from list locally
+        setExistingImages(prev => prev.filter(f => f.name !== name));
+        setImageMessage('Image deleted');
+      } else {
+        setImageMessage(data.message || 'Error deleting image');
+      }
+    } catch (e) {
+      setImageMessage('Error deleting image');
     }
   };
 
@@ -318,6 +360,19 @@ export default function Admin() {
               placeholder="Enter product ID"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
+            <div className="mt-2 flex gap-2">
+              <button
+                type="button"
+                onClick={() => fetchExistingImages(productId)}
+                className="px-3 py-1 bg-gray-800 text-white rounded hover:bg-black text-sm"
+                disabled={!productId || loadingImages}
+              >
+                {loadingImages ? 'Loading…' : 'Load Existing Images'}
+              </button>
+              {existingImages.length > 0 && (
+                <span className="text-sm text-gray-600 self-center">{existingImages.length} image(s) found</span>
+              )}
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Images</label>
@@ -376,6 +431,28 @@ export default function Admin() {
           </button>
         </form>
         {imageMessage && <p className="mt-3 text-green-700">{imageMessage}</p>}
+        {/* Existing Images Gallery */}
+        {existingImages.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-2">Existing Images</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {existingImages.map((f) => (
+                <div key={f.name} className="border rounded-lg p-2">
+                  <img src={f.url} alt={f.name} className="w-full h-28 object-cover rounded" />
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-xs truncate" title={f.name}>{f.name}</span>
+                    <button
+                      onClick={() => handleDeleteImage(f.name)}
+                      className="text-xs px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
 

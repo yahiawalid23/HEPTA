@@ -9,12 +9,22 @@ export const config = {
   },
 };
 
+function contentTypeFromExt(ext) {
+  const e = (ext || "").toLowerCase();
+  if (e === ".jpg" || e === ".jpeg") return "image/jpeg";
+  if (e === ".png") return "image/png";
+  if (e === ".webp") return "image/webp";
+  if (e === ".gif") return "image/gif";
+  if (e === ".bmp") return "image/bmp";
+  return "application/octet-stream";
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  const form = formidable({ multiples: true });
+  const form = formidable({ multiples: true, maxFileSize: 20 * 1024 * 1024 });
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
@@ -55,7 +65,7 @@ export default async function handler(req, res) {
           .from("product-images")
           .upload(storagePath, fileBuffer, {
             upsert: true,
-            contentType: image.mimetype || undefined,
+            contentType: image.mimetype || contentTypeFromExt(ext),
           });
         if (uploadError) {
           throw uploadError;
@@ -71,7 +81,12 @@ export default async function handler(req, res) {
       });
     } catch (error) {
       console.error("Supabase upload error", error);
-      res.status(500).json({ message: "Error saving images" });
+      const isProd = process.env.NODE_ENV === "production";
+      const payload = { message: "Error saving images" };
+      if (!isProd) {
+        payload.details = error?.message || error?.error || String(error);
+      }
+      res.status(500).json(payload);
     }
   });
 }

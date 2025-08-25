@@ -16,26 +16,7 @@ export default function Admin() {
   const [imagePreviews, setImagePreviews] = useState([]);
   const router = useRouter();
 
-  // Log out on page unload (refresh/close/navigation away) using a beacon/keepalive fetch
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const logoutOnUnload = () => {
-      try {
-        if (navigator.sendBeacon) {
-          const blob = new Blob([], { type: 'text/plain' });
-          navigator.sendBeacon('/api/logout', blob);
-        } else {
-          fetch('/api/logout', { method: 'GET', keepalive: true });
-        }
-      } catch (_) {}
-    };
-    window.addEventListener('beforeunload', logoutOnUnload);
-    window.addEventListener('pagehide', logoutOnUnload);
-    return () => {
-      window.removeEventListener('beforeunload', logoutOnUnload);
-      window.removeEventListener('pagehide', logoutOnUnload);
-    };
-  }, []);
+  // Removed auto-logout on refresh/unload to prevent immediate logout on entry
 
   useEffect(() => {
     fetchOrders();

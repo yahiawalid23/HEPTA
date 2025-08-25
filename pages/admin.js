@@ -16,26 +16,26 @@ export default function Admin() {
   const [imagePreviews, setImagePreviews] = useState([]);
   const router = useRouter();
 
-  // Auto-logout if the admin page is accessed via a browser refresh/reload
+  // Log out on page unload (refresh/close/navigation away) using a beacon/keepalive fetch
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    try {
-      const nav = performance.getEntriesByType('navigation');
-      const isReload = (nav && nav[0] && nav[0].type === 'reload') ||
-        (performance.navigation && performance.navigation.type === 1);
-      // Only trigger logout on reload if this tab has previously visited /admin
-      const hasVisited = sessionStorage.getItem('adminVisited') === '1';
-      if (isReload && hasVisited) {
-        fetch('/api/logout').finally(() => {
-          router.replace('/login');
-        });
-      }
-      // Mark that admin page has been visited in this tab
-      sessionStorage.setItem('adminVisited', '1');
-    } catch (_) {
-      // ignore perf API errors
-    }
-  }, [router]);
+    const logoutOnUnload = () => {
+      try {
+        if (navigator.sendBeacon) {
+          const blob = new Blob([], { type: 'text/plain' });
+          navigator.sendBeacon('/api/logout', blob);
+        } else {
+          fetch('/api/logout', { method: 'GET', keepalive: true });
+        }
+      } catch (_) {}
+    };
+    window.addEventListener('beforeunload', logoutOnUnload);
+    window.addEventListener('pagehide', logoutOnUnload);
+    return () => {
+      window.removeEventListener('beforeunload', logoutOnUnload);
+      window.removeEventListener('pagehide', logoutOnUnload);
+    };
+  }, []);
 
   useEffect(() => {
     fetchOrders();

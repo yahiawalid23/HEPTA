@@ -1,9 +1,14 @@
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
+
 export default function Home() {
+  const router = useRouter();
+  useEffect(() => { router.replace('/products'); }, [router]);
   return (
     <main style={{ padding: "40px", fontFamily: "sans-serif" }}>
       <h1>Welcome to the Inventory App</h1>
       <p>
-        This is the homepage.  
+        This is the homepage.
         Use the navigation to view products or login as admin.
       </p>
       <ul style={{ marginTop: "20px" }}>

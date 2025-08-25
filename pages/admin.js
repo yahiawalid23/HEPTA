@@ -23,11 +23,15 @@ export default function Admin() {
       const nav = performance.getEntriesByType('navigation');
       const isReload = (nav && nav[0] && nav[0].type === 'reload') ||
         (performance.navigation && performance.navigation.type === 1);
-      if (isReload) {
+      // Only trigger logout on reload if this tab has previously visited /admin
+      const hasVisited = sessionStorage.getItem('adminVisited') === '1';
+      if (isReload && hasVisited) {
         fetch('/api/logout').finally(() => {
           router.replace('/login');
         });
       }
+      // Mark that admin page has been visited in this tab
+      sessionStorage.setItem('adminVisited', '1');
     } catch (_) {
       // ignore perf API errors
     }

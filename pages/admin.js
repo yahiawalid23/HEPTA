@@ -16,6 +16,23 @@ export default function Admin() {
   const [imagePreviews, setImagePreviews] = useState([]);
   const router = useRouter();
 
+  // Auto-logout if the admin page is accessed via a browser refresh/reload
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const nav = performance.getEntriesByType('navigation');
+      const isReload = (nav && nav[0] && nav[0].type === 'reload') ||
+        (performance.navigation && performance.navigation.type === 1);
+      if (isReload) {
+        fetch('/api/logout').finally(() => {
+          router.replace('/login');
+        });
+      }
+    } catch (_) {
+      // ignore perf API errors
+    }
+  }, [router]);
+
   useEffect(() => {
     fetchOrders();
     

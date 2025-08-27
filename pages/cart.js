@@ -14,8 +14,6 @@ export default function Cart() {
     setCart(JSON.parse(localStorage.getItem("cart") || "[]"));
   }, []);
 
-  const total = cart.reduce((s, it) => s + Number(it.price) * Number(it.qty), 0);
-
   const updateQty = (name, qty) => {
     const next = cart.map((it) => (it.name === name ? { ...it, qty: Number(qty) } : it));
     setCart(next);
@@ -34,13 +32,13 @@ export default function Cart() {
     const res = await fetch("/api/order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        clientName, 
-        clientCompany, 
+      body: JSON.stringify({
+        clientName,
+        clientCompany,
         clientPhone,
         clientEmail,
         clientAddress,
-        items: cart 
+        items: cart
       })
     });
     const data = await res.json();
@@ -69,7 +67,7 @@ export default function Cart() {
               <div key={it.name} className="flex items-center justify-between py-2 border-b last:border-none">
                 <div>
                   <div className="font-medium">{it.name}</div>
-                  <div className="text-sm text-gray-600">Price: {Number(it.price).toFixed(2)}</div>
+                  {/* price removed */}
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -124,8 +122,7 @@ export default function Cart() {
               onChange={(e) => setClientAddress(e.target.value)}
             />
 
-            <div className="flex items-center justify-between">
-              <div className="text-lg font-semibold">Total: {total.toFixed(2)}</div>
+            <div className="flex items-center justify-end">
               <button onClick={placeOrder} className="px-5 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">
                 Place Order
               </button>

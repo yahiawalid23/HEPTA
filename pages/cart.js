@@ -55,19 +55,19 @@ export default function Cart() {
 
   return (
     <div className="max-w-3xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">{lang === 'ar' ? 'سلة المشتريات' : 'Your Cart'}</h1>
-        <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold whitespace-nowrap">{lang === 'ar' ? 'سلة المشتريات' : 'Your Cart'}</h1>
+        <div className="flex gap-2 sm:gap-3">
           <button 
             onClick={() => {
               localStorage.removeItem("cart");
               setCart([]);
             }}
-            className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+            className="px-3 sm:px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 text-sm sm:text-base whitespace-nowrap"
           >
             {lang === 'ar' ? 'مسح السلة' : 'Clear Cart'}
           </button>
-          <Link href="/products" className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">{lang === 'ar' ? 'عودة إلى المنتجات' : 'Back to products'}</Link>
+          <Link href="/products" className="px-3 sm:px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-sm sm:text-base whitespace-nowrap text-center">{lang === 'ar' ? 'عودة إلى المنتجات' : 'Back to products'}</Link>
         </div>
       </div>
 
@@ -77,21 +77,27 @@ export default function Cart() {
         <>
           <div className="bg-white rounded-2xl p-5 shadow">
             {cart.map((it) => (
-              <div key={(it.id ?? it.name) + ''} className="flex items-center justify-between py-2 border-b last:border-none">
-                <div>
-                  <div className="font-medium">{lang === 'ar' ? (it.arabicName || it.name) : (it.englishName || it.name)}</div>
+              <div key={(it.id ?? it.name) + ''} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 border-b last:border-none gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm sm:text-base break-words">{lang === 'ar' ? (it.arabicName || it.name) : (it.englishName || it.name)}</div>
                   {/* price removed */}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <input
                     type="number"
                     min={1}
                     value={it.qty}
                     onChange={(e) => updateQty(it.name, e.target.value)}
-                    className="w-20 border rounded-lg p-2"
+                    className="w-16 sm:w-20 border rounded-lg p-2 text-sm"
                   />
-                  <button onClick={() => removeItem(it.name)} className="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">
-                    {lang === 'ar' ? 'إزالة' : 'Remove'}
+                  <button 
+                    onClick={() => removeItem(it.name)} 
+                    className="p-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors flex items-center justify-center"
+                    title={lang === 'ar' ? 'إزالة' : 'Remove'}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                   </button>
                 </div>
               </div>

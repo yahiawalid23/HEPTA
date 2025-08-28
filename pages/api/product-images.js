@@ -5,6 +5,8 @@ export default async function handler(req, res) {
   if (!id) return res.status(400).json({ message: "Product ID required" });
 
   try {
+    // Cache per product for 10 minutes, allow stale for 1 hour
+    res.setHeader("Cache-Control", "public, s-maxage=600, stale-while-revalidate=3600");
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!supabaseUrl || !supabaseKey) {

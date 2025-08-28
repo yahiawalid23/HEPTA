@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useLang } from "@/utils/i18n";
 
 export default function Cart() {
+  const { lang, setLang } = useLang();
   const [cart, setCart] = useState([]);
   const [clientName, setClientName] = useState("");
   const [clientCompany, setClientCompany] = useState("");
@@ -27,8 +29,8 @@ export default function Cart() {
   };
 
   const placeOrder = async () => {
-    if (!clientName) return setMessage("Please enter your name.");
-    if (!clientPhone) return setMessage("Please enter your phone number.");
+    if (!clientName) return setMessage(lang === 'ar' ? "يرجى إدخال اسمك." : "Please enter your name.");
+    if (!clientPhone) return setMessage(lang === 'ar' ? "يرجى إدخال رقم هاتفك." : "Please enter your phone number.");
     const res = await fetch("/api/order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -43,30 +45,30 @@ export default function Cart() {
     });
     const data = await res.json();
     if (res.ok) {
-      setMessage("Order placed successfully.");
+      setMessage(lang === 'ar' ? "تم إرسال الطلب بنجاح." : "Order placed successfully.");
       localStorage.removeItem("cart");
       setCart([]);
     } else {
-      setMessage(data.message || "Error placing order.");
+      setMessage(data.message || (lang === 'ar' ? "حدث خطأ أثناء إرسال الطلب." : "Error placing order."));
     }
   };
 
   return (
     <div className="max-w-3xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Your Cart</h1>
-        <Link href="/products" className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">Back to products</Link>
+        <h1 className="text-2xl font-bold">{lang === 'ar' ? 'سلة المشتريات' : 'Your Cart'}</h1>
+        <Link href="/products" className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">{lang === 'ar' ? 'عودة إلى المنتجات' : 'Back to products'}</Link>
       </div>
 
       {cart.length === 0 ? (
-        <p>Your cart is empty.</p>
+        <p>{lang === 'ar' ? 'سلة المشتريات فارغة.' : 'Your cart is empty.'}</p>
       ) : (
         <>
           <div className="bg-white rounded-2xl p-5 shadow">
             {cart.map((it) => (
-              <div key={it.name} className="flex items-center justify-between py-2 border-b last:border-none">
+              <div key={(it.id ?? it.name) + ''} className="flex items-center justify-between py-2 border-b last:border-none">
                 <div>
-                  <div className="font-medium">{it.name}</div>
+                  <div className="font-medium">{lang === 'ar' ? (it.arabicName || it.name) : (it.englishName || it.name)}</div>
                   {/* price removed */}
                 </div>
                 <div className="flex items-center gap-2">
@@ -78,7 +80,7 @@ export default function Cart() {
                     className="w-20 border rounded-lg p-2"
                   />
                   <button onClick={() => removeItem(it.name)} className="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">
-                    Remove
+                    {lang === 'ar' ? 'إزالة' : 'Remove'}
                   </button>
                 </div>
               </div>
@@ -86,37 +88,37 @@ export default function Cart() {
           </div>
 
           <div className="bg-white rounded-2xl p-5 shadow mt-6">
-            <h2 className="text-xl font-semibold mb-3">Checkout</h2>
+            <h2 className="text-xl font-semibold mb-3">{lang === 'ar' ? 'إتمام الشراء' : 'Checkout'}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
               <input
                 className="w-full border rounded-lg p-2"
-                placeholder="Your name *"
+                placeholder={lang === 'ar' ? 'اسمك *' : 'Your name *'}
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
               />
               <input
                 className="w-full border rounded-lg p-2"
-                placeholder="Phone number *"
+                placeholder={lang === 'ar' ? 'رقم الهاتف *' : 'Phone number *'}
                 value={clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
               />
               <input
                 className="w-full border rounded-lg p-2"
-                placeholder="Email address"
+                placeholder={lang === 'ar' ? 'البريد الإلكتروني' : 'Email address'}
                 type="email"
                 value={clientEmail}
                 onChange={(e) => setClientEmail(e.target.value)}
               />
               <input
                 className="w-full border rounded-lg p-2"
-                placeholder="Company (hotel/supermarket)"
+                placeholder={lang === 'ar' ? 'الشركة (فندق/سوبرماركت)' : 'Company (hotel/supermarket)'}
                 value={clientCompany}
                 onChange={(e) => setClientCompany(e.target.value)}
               />
             </div>
             <textarea
               className="w-full border rounded-lg p-2 mb-4"
-              placeholder="Delivery address"
+              placeholder={lang === 'ar' ? 'عنوان التوصيل' : 'Delivery address'}
               rows="2"
               value={clientAddress}
               onChange={(e) => setClientAddress(e.target.value)}
@@ -124,7 +126,7 @@ export default function Cart() {
 
             <div className="flex items-center justify-end">
               <button onClick={placeOrder} className="px-5 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">
-                Place Order
+                {lang === 'ar' ? 'إرسال الطلب' : 'Place Order'}
               </button>
             </div>
             {message && <p className="mt-3">{message}</p>}

@@ -4,6 +4,8 @@ import * as XLSX from "xlsx";
 
 export default async function handler(req, res) {
   try {
+    // Cache for 5 minutes at the edge, allow stale for 10 minutes
+    res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 

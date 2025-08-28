@@ -57,7 +57,18 @@ export default function Cart() {
     <div className="max-w-3xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">{lang === 'ar' ? 'سلة المشتريات' : 'Your Cart'}</h1>
-        <Link href="/products" className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">{lang === 'ar' ? 'عودة إلى المنتجات' : 'Back to products'}</Link>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => {
+              localStorage.removeItem("cart");
+              setCart([]);
+            }}
+            className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+          >
+            {lang === 'ar' ? 'مسح السلة' : 'Clear Cart'}
+          </button>
+          <Link href="/products" className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">{lang === 'ar' ? 'عودة إلى المنتجات' : 'Back to products'}</Link>
+        </div>
       </div>
 
       {cart.length === 0 ? (

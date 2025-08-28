@@ -17,6 +17,9 @@ export default function Products() {
   const [productThumbs, setProductThumbs] = useState({});
   const cartRef = useRef(null);
   const addToCartBtnRef = useRef(null);
+  const lastAnimTimeRef = useRef(0);
+  const startPointRef = useRef(null); // { x, y } center of clicked product card
+  const modalImageRef = useRef(null); // container of product images in modal
 
   useEffect(() => {
     fetch("/api/products")
@@ -86,40 +89,65 @@ export default function Products() {
   };
 
   // Simple fly-to-cart animation from startEl to the cart button
-  const animateToCart = (startEl, endEl) => {
-    if (!startEl || !endEl) return;
-    const startRect = startEl.getBoundingClientRect();
+  const animateToCart = (startEl, endEl, startPoint) => {
+    console.log('animateToCart called:', { startEl: !!startEl, endEl: !!endEl, startPoint });
+    
+    if (!endEl) {
+      console.log('No end element, skipping animation');
+      return;
+    }
+    
+    // Determine start coordinates
+    let startCenterX, startCenterY;
+    if (startPoint && typeof startPoint.x === 'number' && typeof startPoint.y === 'number') {
+      startCenterX = startPoint.x;
+      startCenterY = startPoint.y;
+      console.log('Using startPoint:', startPoint);
+    } else if (startEl) {
+      const startRect = startEl.getBoundingClientRect();
+      startCenterX = startRect.left + startRect.width / 2;
+      startCenterY = startRect.top + startRect.height / 2;
+      console.log('Using startEl rect:', { startCenterX, startCenterY });
+    } else {
+      console.log('No valid start position, aborting');
+      return;
+    }
+    
     const endRect = endEl.getBoundingClientRect();
+    console.log('End rect:', endRect);
 
     const ghost = document.createElement('div');
     ghost.style.position = 'fixed';
-    ghost.style.left = `${startRect.left + startRect.width / 2 - 10}px`;
-    ghost.style.top = `${startRect.top + startRect.height / 2 - 10}px`;
+    ghost.style.left = `${startCenterX - 10}px`;
+    ghost.style.top = `${startCenterY - 10}px`;
     ghost.style.width = '20px';
     ghost.style.height = '20px';
-    ghost.style.background = '#F59E0B'; // amber, matches Add to Cart
-    ghost.style.borderRadius = '6px';
-    ghost.style.boxShadow = '0 8px 20px rgba(0,0,0,0.2)';
-    ghost.style.zIndex = '9999';
-    ghost.style.transition = 'transform 600ms cubic-bezier(0.22, 1, 0.36, 1), opacity 600ms ease';
-    ghost.style.transform = 'scale(1)';
-    ghost.style.opacity = '1';
+    ghost.style.background = '#F59E0B';
+    ghost.style.borderRadius = '50%';
+    ghost.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.4)';
+    ghost.style.zIndex = '10000';
+    ghost.style.pointerEvents = 'none';
 
     document.body.appendChild(ghost);
+    console.log('Ghost created at:', { left: ghost.style.left, top: ghost.style.top });
 
-    const deltaX = endRect.left + endRect.width / 2 - (startRect.left + startRect.width / 2);
-    const deltaY = endRect.top + endRect.height / 2 - (startRect.top + startRect.height / 2);
+    const deltaX = (endRect.left + endRect.width / 2) - startCenterX;
+    const deltaY = (endRect.top + endRect.height / 2) - startCenterY;
+    console.log('Delta:', { deltaX, deltaY });
 
-    requestAnimationFrame(() => {
-      ghost.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.6)`;
-      ghost.style.opacity = '0.2';
-    });
+    // Animate using CSS transition
+    ghost.style.transition = 'all 800ms cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    
+    setTimeout(() => {
+      ghost.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.3)`;
+      ghost.style.opacity = '0';
+    }, 10);
 
-    const cleanup = () => {
-      if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
-      ghost.removeEventListener('transitionend', cleanup);
-    };
-    ghost.addEventListener('transitionend', cleanup);
+    setTimeout(() => {
+      if (ghost && ghost.parentNode) {
+        ghost.parentNode.removeChild(ghost);
+      }
+    }, 850);
   };
 
   // Filter products based on search term and category
@@ -157,7 +185,14 @@ export default function Products() {
     }
   };
 
-  const handleProductClick = async (product) => {
+  const handleProductClick = async (product, evt) => {
+    // capture the center point of the clicked card for the animation origin
+    if (evt && evt.currentTarget) {
+      const r = evt.currentTarget.getBoundingClientRect();
+      startPointRef.current = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    } else {
+      startPointRef.current = null;
+    }
     setSelectedProduct(product);
     setQty(1);
 
@@ -345,7 +380,7 @@ export default function Products() {
                 <div
                   key={p.id}
                   className="bg-white rounded-2xl p-5 shadow hover:shadow-lg transition cursor-pointer"
-                  onClick={() => handleProductClick(p)}
+                  onClick={(e) => handleProductClick(p, e)}
                 >
                   <div className="aspect-square bg-gray-100 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
                     <img
@@ -393,6 +428,7 @@ export default function Products() {
                 <div className="mb-4">
                   {productImages[selectedProduct.id] && productImages[selectedProduct.id].images && productImages[selectedProduct.id].images.length > 0 ? (
                     <div
+                      ref={modalImageRef}
                       className="flex gap-3 overflow-x-scroll scrollbar-hide pb-2"
                       style={{
                         scrollbarWidth: 'none',
@@ -416,7 +452,7 @@ export default function Products() {
                       ))}
                     </div>
                   ) : (
-                    <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <div ref={modalImageRef} className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
                       <span className="text-gray-500">{lang === 'ar' ? 'لا توجد صورة' : 'No image available'}</span>
                     </div>
                   )}
@@ -472,9 +508,23 @@ export default function Products() {
                       ref={addToCartBtnRef}
                       className="w-full px-6 py-3 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 font-semibold"
                       onClick={() => {
-                        // run animation first for better UX
-                        animateToCart(addToCartBtnRef.current, cartRef.current);
+                        const now = Date.now();
+                        const COOLDOWN_MS = 1200;
+                        const canAnimate = now - lastAnimTimeRef.current > COOLDOWN_MS;
+                        
+                        // Add to cart
                         handleAddToCart();
+                        
+                        // Close modal
+                        setSelectedProduct(null);
+                        
+                        // Simple animation from stored card position to cart button
+                        if (canAnimate && startPointRef.current) {
+                          lastAnimTimeRef.current = now;
+                          setTimeout(() => {
+                            animateToCart(null, cartRef.current, startPointRef.current);
+                          }, 100);
+                        }
                       }}
                     >
                       {lang === 'ar' ? 'أضف إلى السلة' : 'Add to Cart'}

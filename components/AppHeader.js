@@ -26,6 +26,13 @@ export default function AppHeader() {
           alt="Logo"
           className={logoClass}
         />
+
+        {/* Invisible global animation target near the opposite side of the toggle */}
+        <span
+          id="cart-target"
+          className={`pointer-events-none absolute top-1/2 -translate-y-1/2 ${lang === 'ar' ? 'left-6' : 'right-6'} w-3 h-3 rounded-full opacity-0`}
+          aria-hidden="true"
+        />
       </div>
     </header>
   );
